@@ -1,0 +1,1 @@
+import signtool.signing.client

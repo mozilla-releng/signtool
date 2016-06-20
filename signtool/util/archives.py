@@ -6,7 +6,7 @@ import tempfile
 import bz2
 import shutil
 
-from util.paths import cygpath, findfiles
+from signtool.util.paths import cygpath, findfiles
 
 log = logging.getLogger(__name__)
 

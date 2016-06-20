@@ -13,7 +13,7 @@ from subprocess import check_call
 
 from poster.encode import multipart_encode
 
-from util.file import sha1sum, copyfile
+from signtool.util.file import sha1sum, copyfile
 
 import logging
 log = logging.getLogger(__name__)

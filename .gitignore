@@ -1,0 +1,6 @@
+.coverage
+.tox
+coverage.xml
+signtool.egg-info/
+nosetests.xml
+*.pyc

@@ -4,20 +4,17 @@
 If no include patterns are specified, all files will be considered. -i/-x only
 have effect when signing entire directories."""
 from collections import defaultdict
-import os
-import sys
-import site
-# Modify our search path to find our modules
-site.addsitedir(os.path.join(os.path.dirname(__file__), "../../lib/python"))
-
-from signing.client import remote_signfile, buildValidatingOpener
-from util.archives import packtar, unpacktar
-from util.paths import findfiles
-
 import logging
-log = logging.getLogger(__name__)
-
+import os
 import pefile
+import site
+import sys
+
+from signtool.signing.client import remote_signfile, buildValidatingOpener
+from signtool.util.archives import packtar, unpacktar
+from signtool.util.paths import findfiles
+
+log = logging.getLogger(__name__)
 
 
 def is_authenticode_signed(filename):
