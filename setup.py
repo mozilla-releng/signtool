@@ -22,11 +22,11 @@ if sys.version_info >= (3, 5):
 
 setup(
     name="signtool",
-    version="1.0.8a",
+    version="1.0.8",
     description="Mozilla Signing Tool",
     author="Release Engineers",
     author_email="release+python@mozilla.com",
-    packages=["signtool"],
+    packages=find_packages(exclude="tests"),
     test_suite='tests',
     zip_safe=False,
     license="MPL 2.0",
