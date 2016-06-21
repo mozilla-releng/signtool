@@ -22,7 +22,7 @@ if sys.version_info >= (3, 5):
 
 setup(
     name="signtool",
-    version="1.0.8",
+    version="1.0.9a",
     description="Mozilla Signing Tool",
     author="Release Engineers",
     author_email="release+python@mozilla.com",
