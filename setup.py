@@ -25,7 +25,7 @@ setup(
     version="1.0.6",
     description="Mozilla Signing Tool",
     author="Release Engineers",
-    author_email="release@mozilla.com",
+    author_email="release+python@mozilla.com",
 
     packages=["signtool"],
 
