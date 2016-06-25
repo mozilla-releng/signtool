@@ -6,6 +6,7 @@ import os
 import sys
 
 deps = [
+    'pefile==2016.3.28',
     'six',
 ]
 
