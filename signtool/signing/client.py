@@ -153,6 +153,8 @@ def remote_signfile(options, urls, filename, fmt, token, dest=None):
                 r = uploadfile(url, filename, fmt, token, nonce, options.cert)
                 r.raise_for_status()
                 nonce = r.headers['X-Nonce']
+                if six.PY3 and isinstance(nonce, six.text_type):
+                    nonce = nonce.encode('utf-8')
                 open(options.noncefile, 'wb').write(nonce)
             except requests.HTTPError as e:
                 log.exception("%s: error uploading file for signing: %s %s",
