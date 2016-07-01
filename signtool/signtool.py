@@ -7,7 +7,6 @@ from collections import defaultdict
 import logging
 import os
 import pefile
-import site
 import sys
 from optparse import OptionParser
 import random
@@ -75,9 +74,11 @@ def parse_cmdln_opts(cmdln_args):
     parser.add_option("-n", "--nonce-file", dest="noncefile",
                       help="file where nonce is stored")
     parser.add_option("-d", "--output-dir", dest="output_dir",
-                      help="output directory; if not set then files are replaced with signed copies")
+                      help="output directory; if not set then files are "
+                      "replaced with signed copies")
     parser.add_option("-o", "--output-file", dest="output_file",
-                      help="output file; if not set then files are replaced with signed copies. This can only be used when signing a single file")
+                      help="output file; if not set then files are replaced with signed "
+                      "copies. This can only be used when signing a single file")
     parser.add_option("-f", "--formats", dest="formats", action="append",
                       help="signing formats (one or more of %s)" % ", ".join(ALLOWED_FORMATS))
     parser.add_option("-q", "--quiet", dest="log_level", action="store_const",
@@ -97,7 +98,6 @@ def parse_cmdln_opts(cmdln_args):
     # TODO: Different certs per server?
 
     options, args = parser.parse_args(cmdln_args)
-
 
     if not options.hosts:
         parser.error("at least one host is required")
@@ -176,6 +176,7 @@ def parse_cmdln_opts(cmdln_args):
 
         for f in fmts:
             format_urls[f].append("https://%s" % ":".join(h))
+    options.format_urls = format_urls
 
     missing_fmt_hosts = set(formats) - set(format_urls.keys())
     if missing_fmt_hosts:
@@ -199,7 +200,7 @@ def main(name=None):
     token = open(options.tokenfile, 'rb').read()
 
     for fmt in options.formats:
-        urls = format_urls[fmt]
+        urls = options.format_urls[fmt]
         random.shuffle(urls)
 
         # The only difference between dmg and dmgv2 are the servers they use.

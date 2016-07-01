@@ -45,7 +45,8 @@ def check_cached_fn(options, cached_fn, filehash, filename, dest):
         os.rename(tmpfile, dest)
         log.info("%s: OK", filehash)
         # See if we should re-sign NSS
-        if options.nsscmd and filehash != newhash and os.path.exists(os.path.splitext(filename)[0] + ".chk"):
+        if options.nsscmd and filehash != newhash and \
+                os.path.exists(os.path.splitext(filename)[0] + ".chk"):
             cmd = '%s "%s"' % (options.nsscmd, dest)
             log.info("Regenerating .chk file")
             log.debug("Running %s", cmd)
@@ -116,7 +117,8 @@ def remote_signfile(options, urls, filename, fmt, token, dest=None):
             os.rename(tmpfile, dest)
             log.info("%s: OK", filehash)
             # See if we should re-sign NSS
-            if options.nsscmd and filehash != responsehash and os.path.exists(os.path.splitext(filename)[0] + ".chk"):
+            if options.nsscmd and filehash != responsehash and \
+                    os.path.exists(os.path.splitext(filename)[0] + ".chk"):
                 cmd = '%s "%s"' % (options.nsscmd, dest)
                 log.info("Regenerating .chk file")
                 log.debug("Running %s", cmd)

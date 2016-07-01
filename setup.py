@@ -1,9 +1,6 @@
 #! /usr/bin/env python
 
-from pip.req import parse_requirements
 from setuptools import setup, find_packages
-import os
-import sys
 
 deps = [
     'pefile==2016.3.28',
