@@ -1,15 +1,15 @@
 import base64
-from six.moves.urllib.request import urlopen, Request
-from six.moves.urllib.error import HTTPError, URLError
-import os
 import hashlib
-import time
+import os
+import requests
 import socket
-import six.moves.http_client as httplib
+from subprocess import check_call
+import time
 import urllib
 
-# TODO: Use util.command
-from subprocess import check_call
+import six.moves.http_client as httplib
+from six.moves.urllib.error import HTTPError, URLError
+from six.moves.urllib.request import urlopen, Request
 
 from signtool.util.file import sha1sum, copyfile
 
@@ -17,11 +17,10 @@ import logging
 log = logging.getLogger(__name__)
 
 
-def getfile(baseurl, filehash, format_):
+def getfile(baseurl, filehash, format_, cert, method):
     url = "%s/sign/%s/%s" % (baseurl, format_, filehash)
     log.debug("%s: GET %s", filehash, url)
-    r = Request(url)
-    return urlopen(r)
+    return method(url, verify=cert)
 
 
 def get_token(baseurl, username, password, slave_ip, duration):
@@ -39,6 +38,34 @@ def get_token(baseurl, username, password, slave_ip, duration):
     return urlopen(r).read()
 
 
+def check_cached_fn(options, cached_fn, filehash, filename, dest):
+    log.debug("%s: checking cache", filehash)
+    if os.path.exists(cached_fn):
+        log.info("%s: exists in the cache; copying to %s", filehash, dest)
+        cached_fp = open(cached_fn, 'rb')
+        tmpfile = dest + '.tmp'
+        hsh = hashlib.new('sha1')
+        with open(tmpfile, 'wb') as fp:
+            while True:
+                data = cached_fp.read(1024 ** 2)
+                if not data:
+                    break
+                hsh.update(data)
+                fp.write(data)
+        newhash = hsh.hexdigest()
+        if os.path.exists(dest):
+            os.unlink(dest)
+        os.rename(tmpfile, dest)
+        log.info("%s: OK", filehash)
+        # See if we should re-sign NSS
+        if options.nsscmd and filehash != newhash and os.path.exists(os.path.splitext(filename)[0] + ".chk"):
+            cmd = '%s "%s"' % (options.nsscmd, dest)
+            log.info("Regenerating .chk file")
+            log.debug("Running %s", cmd)
+            check_call(cmd, shell=True)
+        return True
+
+
 def remote_signfile(options, urls, filename, fmt, token, dest=None):
     filehash = sha1sum(filename)
     if dest is None:
@@ -54,32 +81,9 @@ def remote_signfile(options, urls, filename, fmt, token, dest=None):
     # Check the cache
     cached_fn = None
     if options.cachedir:
-        log.debug("%s: checking cache", filehash)
         cached_fn = os.path.join(options.cachedir, fmt, filehash)
-        if os.path.exists(cached_fn):
-            log.info("%s: exists in the cache; copying to %s", filehash, dest)
-            cached_fp = open(cached_fn, 'rb')
-            tmpfile = dest + '.tmp'
-            fp = open(tmpfile, 'wb')
-            hsh = hashlib.new('sha1')
-            while True:
-                data = cached_fp.read(1024 ** 2)
-                if not data:
-                    break
-                hsh.update(data)
-                fp.write(data)
-            fp.close()
-            newhash = hsh.hexdigest()
-            if os.path.exists(dest):
-                os.unlink(dest)
-            os.rename(tmpfile, dest)
-            log.info("%s: OK", filehash)
-            # See if we should re-sign NSS
-            if options.nsscmd and filehash != newhash and os.path.exists(os.path.splitext(filename)[0] + ".chk"):
-                cmd = '%s "%s"' % (options.nsscmd, dest)
-                log.info("Regenerating .chk file")
-                log.debug("Running %s", cmd)
-                check_call(cmd, shell=True)
+        result = check_cached_fn(options, cached_fn, filehash, filename, dest)
+        if result:
             return True
 
     errors = 0
@@ -104,17 +108,13 @@ def remote_signfile(options, urls, filename, fmt, token, dest=None):
         try:
             url = urls[0]
             log.info("%s: processing %s on %s", filehash, filename, url)
-            req = getfile(url, filehash, fmt)
-            headers = req.info()
-            responsehash = headers['X-SHA1-Digest']
+            r = getfile(url, filehash, fmt, options.cert, requests.get)
+            r.raise_for_status()
+            responsehash = r.headers['X-SHA1-Digest']
             tmpfile = dest + '.tmp'
-            fp = open(tmpfile, 'wb')
-            while True:
-                data = req.read(1024 ** 2)
-                if not data:
-                    break
-                fp.write(data)
-            fp.close()
+            with open(tmpfile, 'wb') as fd:
+                for chunk in r.iter_content(1024 ** 2):
+                    fd.write(chunk)
             newhash = sha1sum(tmpfile)
             if newhash != responsehash:
                 log.warn(
