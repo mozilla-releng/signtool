@@ -1,15 +1,12 @@
 import base64
-import hashlib
 import os
 import requests
 import socket
 from subprocess import check_call
 import time
-import urllib
 
 import six.moves.http_client as httplib
 from six.moves.urllib.error import HTTPError, URLError
-from six.moves.urllib.request import urlopen, Request
 
 from signtool.util.file import sha1sum, copyfile
 
@@ -17,25 +14,23 @@ import logging
 log = logging.getLogger(__name__)
 
 
-def getfile(baseurl, filehash, format_, cert, method):
+def getfile(baseurl, filehash, format_, cert, method=requests.get):
     url = "%s/sign/%s/%s" % (baseurl, format_, filehash)
     log.debug("%s: GET %s", filehash, url)
     return method(url, verify=cert)
 
 
-def get_token(baseurl, username, password, slave_ip, duration):
+def get_token(baseurl, username, password, slave_ip, duration, method=requests.post):
     auth = base64.encodestring('%s:%s' % (username, password)).rstrip('\n')
     url = '%s/token' % baseurl
-    data = urllib.urlencode({
+    payload = {
         'slave_ip': slave_ip,
         'duration': duration,
-    })
+    }
     headers = {
         'Authorization': 'Basic %s' % auth,
-        'Content-Length': str(len(data)),
     }
-    r = Request(url, data, headers)
-    return urlopen(r).read()
+    return method(url, data=payload, headers=headers)
 
 
 def check_cached_fn(options, cached_fn, filehash, filename, dest):
@@ -44,7 +39,7 @@ def check_cached_fn(options, cached_fn, filehash, filename, dest):
         log.info("%s: exists in the cache; copying to %s", filehash, dest)
         tmpfile = dest + '.tmp'
         copyfile(cached_fn, tmpfile)
-        hsh = sha1sum(tmpfile)
+        newhash = sha1sum(tmpfile)
         if os.path.exists(dest):
             os.unlink(dest)
         os.rename(tmpfile, dest)
@@ -84,12 +79,14 @@ def remote_signfile(options, urls, filename, fmt, token, dest=None):
     # It takes the server ~60s to respond to an attempting to get a signed file
     # We want to give up after about 5 minutes, so 60*5 = 5 tries.
     max_pending_tries = 5
+    url = None
     while True:
         if pendings >= max_pending_tries:
             log.error("%s: giving up after %i tries", filehash, pendings)
             # If we've given up on the current server, try a different one!
             urls.pop(0)
-            urls.append(url)
+            if url:
+                urls.append(url)
             errors += 1
             # Pendings needs to be reset to give the next server a fair shake.
             pendings = 0
@@ -194,19 +191,20 @@ def uploadfile(baseurl, filename, format_, token, nonce):
     `sesson_key` and `nonce` are string values that get passed as POST
     parameters.
     """
-    filehash = sha1sum(filename)
+    pass
+    # filehash = sha1sum(filename)
 
     # from http://stackoverflow.com/questions/10546437/problems-using-multipart-encode-poster-library
-    items = []
-    params = {
-        'sha1': filehash,
-        'filename': os.path.basename(filename),
-        'token': token,
-        'nonce': nonce,
-    }
+    # items = []
+    # params = {
+    #    'sha1': filehash,
+    #    'filename': os.path.basename(filename),
+    #    'token': token,
+    #    'nonce': nonce,
+    # }
     # items.append(MultipartParam.from_file('filedata', filename))
 
-    #datagen, headers = multipart_encode(items)
-    #r = Request(
+    # datagen, headers = multipart_encode(items)
+    # r = Request(
     #    "%s/sign/%s" % (baseurl, format_), datagen, headers)
-    #return urlopen(r)
+    # return urlopen(r)
