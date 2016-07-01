@@ -1,12 +1,8 @@
 import base64
 import os
 import requests
-import socket
 from subprocess import check_call
 import time
-
-import six.moves.http_client as httplib
-from six.moves.urllib.error import HTTPError, URLError
 
 from signtool.util.file import sha1sum, copyfile
 
@@ -23,6 +19,7 @@ def getfile(baseurl, filehash, format_, cert, method=requests.get):
 def get_token(baseurl, username, password, slave_ip, duration, method=requests.post):
     auth = base64.encodestring('%s:%s' % (username, password)).rstrip('\n')
     url = '%s/token' % baseurl
+    log.debug("get_token: %s", url)
     payload = {
         'slave_ip': slave_ip,
         'duration': duration,
@@ -33,6 +30,13 @@ def get_token(baseurl, username, password, slave_ip, duration, method=requests.p
     return method(url, data=payload, headers=headers)
 
 
+def overwrite_file(path1, path2):
+    log.debug("overwrite %s with %s", path2, path1)
+    if os.path.exists(path2):
+        os.unlink(path2)
+    os.rename(path1, path2)
+
+
 def check_cached_fn(options, cached_fn, filehash, filename, dest):
     log.debug("%s: checking cache", filehash)
     if os.path.exists(cached_fn):
@@ -40,9 +44,7 @@ def check_cached_fn(options, cached_fn, filehash, filename, dest):
         tmpfile = dest + '.tmp'
         copyfile(cached_fn, tmpfile)
         newhash = sha1sum(tmpfile)
-        if os.path.exists(dest):
-            os.unlink(dest)
-        os.rename(tmpfile, dest)
+        overwrite_file(tmpfile, dest)
         log.info("%s: OK", filehash)
         # See if we should re-sign NSS
         if options.nsscmd and filehash != newhash and \
@@ -85,9 +87,8 @@ def remote_signfile(options, urls, filename, fmt, token, dest=None):
         if pendings >= max_pending_tries:
             log.error("%s: giving up after %i tries", filehash, pendings)
             # If we've given up on the current server, try a different one!
-            urls.pop(0)
-            if url:
-                urls.append(url)
+            url = urls.pop(0)
+            urls.append(url)
             errors += 1
             # Pendings needs to be reset to give the next server a fair shake.
             pendings = 0
@@ -98,7 +99,7 @@ def remote_signfile(options, urls, filename, fmt, token, dest=None):
         try:
             url = urls[0]
             log.info("%s: processing %s on %s", filehash, filename, url)
-            r = getfile(url, filehash, fmt, options.cert, requests.get)
+            r = getfile(url, filehash, fmt, options.cert)
             r.raise_for_status()
             responsehash = r.headers['X-SHA1-Digest']
             tmpfile = dest + '.tmp'
@@ -112,9 +113,7 @@ def remote_signfile(options, urls, filename, fmt, token, dest=None):
                 os.unlink(tmpfile)
                 errors += 1
                 continue
-            if os.path.exists(dest):
-                os.unlink(dest)
-            os.rename(tmpfile, dest)
+            overwrite_file(tmpfile, dest)
             log.info("%s: OK", filehash)
             # See if we should re-sign NSS
             if options.nsscmd and filehash != responsehash and \
@@ -125,15 +124,14 @@ def remote_signfile(options, urls, filename, fmt, token, dest=None):
                 check_call(cmd, shell=True)
 
             # Possibly write to our cache
-            if cached_fn:
-                cached_dir = os.path.dirname(cached_fn)
-                if not os.path.exists(cached_dir):
-                    log.debug("Creating %s", cached_dir)
-                    os.makedirs(cached_dir)
+            if options.cachedir:
+                if not os.path.exists(options.cachedir):
+                    log.debug("Creating %s", options.cachedir)
+                    os.makedirs(options.cachedir)
                 log.info("Copying %s to cache %s", dest, cached_fn)
                 copyfile(dest, cached_fn)
             break
-        except HTTPError as e:
+        except requests.HTTPError as e:
             try:
                 if 'X-Pending' in e.headers:
                     log.debug("%s: pending; try again in a bit", filehash)
@@ -147,35 +145,23 @@ def remote_signfile(options, urls, filename, fmt, token, dest=None):
 
             # That didn't work...so let's upload it
             log.info("%s: uploading for signing", filehash)
-            req = None
             try:
                 try:
                     nonce = open(options.noncefile, 'rb').read()
                 except IOError:
                     nonce = ""
-                req = uploadfile(url, filename, fmt, token, nonce=nonce)
-                nonce = req.info()['X-Nonce']
+                r = uploadfile(url, filename, fmt, token, nonce=nonce)
+                r.raise_for_status()
+                nonce = r.headers['X-Nonce']
                 open(options.noncefile, 'wb').write(nonce)
-            except HTTPError as e:
-                # python2.5 doesn't think 202 is ok...but really it is!
-                if 'X-Nonce' in e.headers:
-                    log.debug("updating nonce")
-                    nonce = e.headers['X-Nonce']
-                    open(options.noncefile, 'wb').write(nonce)
-                if e.code != 202:
-                    log.exception("%s: error uploading file for signing: %s %s",
-                                  filehash, e.code, e.msg)
-                    urls.pop(0)
-                    urls.append(url)
-            except (URLError, socket.error, httplib.BadStatusLine):
-                # Try again in a little while
-                log.exception("%s: connection error; trying again soon", filehash)
-                # Move the current url to the back
+            except requests.HTTPError as e:
+                log.exception("%s: error uploading file for signing: %s %s",
+                              filehash, e.code, e.msg)
                 urls.pop(0)
                 urls.append(url)
             time.sleep(1)
             continue
-        except (URLError, socket.error):
+        except (requests.RequestException, KeyError):
             # Try again in a little while
             log.exception("%s: connection error; trying again soon", filehash)
             # Move the current url to the back
@@ -187,26 +173,20 @@ def remote_signfile(options, urls, filename, fmt, token, dest=None):
     return True
 
 
-def uploadfile(baseurl, filename, format_, token, nonce):
+def uploadfile(baseurl, filename, format_, token, nonce, method=requests.post):
     """Uploads file (given by `filename`) to server at `baseurl`.
 
     `sesson_key` and `nonce` are string values that get passed as POST
     parameters.
     """
-    pass
-    # filehash = sha1sum(filename)
+    filehash = sha1sum(filename)
+    files = {'filedata': open(filename, 'rb')}
 
-    # from http://stackoverflow.com/questions/10546437/problems-using-multipart-encode-poster-library
-    # items = []
-    # params = {
-    #    'sha1': filehash,
-    #    'filename': os.path.basename(filename),
-    #    'token': token,
-    #    'nonce': nonce,
-    # }
-    # items.append(MultipartParam.from_file('filedata', filename))
+    payload = {
+        'sha1': filehash,
+        'filename': os.path.basename(filename),
+        'token': token,
+        'nonce': nonce,
+    }
 
-    # datagen, headers = multipart_encode(items)
-    # r = Request(
-    #    "%s/sign/%s" % (baseurl, format_), datagen, headers)
-    # return urlopen(r)
+    return method("%s/sign/%s" % (baseurl, format_), files=files, data=payload)

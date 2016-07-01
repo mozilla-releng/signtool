@@ -200,7 +200,7 @@ def main(name=None):
     token = open(options.tokenfile, 'rb').read()
 
     for fmt in options.formats:
-        urls = options.format_urls[fmt]
+        urls = options.format_urls[fmt][:]
         random.shuffle(urls)
 
         # The only difference between dmg and dmgv2 are the servers they use.
