@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 """signtool.py [options] file [file ...]
 
 If no include patterns are specified, all files will be considered. -i/-x only
@@ -25,6 +25,7 @@ ALLOWED_FORMATS = (
 log = logging.getLogger(__name__)
 
 
+# is_authenticode_signed {{{1
 def is_authenticode_signed(filename):
     """Returns True if the file is signed with authenticode"""
     p = None
@@ -44,10 +45,12 @@ def is_authenticode_signed(filename):
             p.close()
 
 
-def main(name=None):
-    if name not in (None, '__main__'):
-        return
-
+# parse_cmdln_opts {{{1
+def parse_cmdln_opts(cmdln_args):
+    """Rather than have this all clutter main(), let's split this out.
+    Clean arch decision: rather than parsing sys.argv directly, pass
+    sys.argv[1:] to this function (or any iterable for testing.)
+    """
     parser = OptionParser(__doc__)
     parser.set_defaults(
         hosts=[],
@@ -93,10 +96,8 @@ def main(name=None):
     # TODO: Concurrency?
     # TODO: Different certs per server?
 
-    options, args = parser.parse_args()
+    options, args = parser.parse_args(cmdln_args)
 
-    logging.basicConfig(
-        level=options.log_level, format="%(asctime)s - %(message)s")
 
     if not options.hosts:
         parser.error("at least one host is required")
@@ -159,6 +160,8 @@ def main(name=None):
     if not formats:
         parser.error("no formats specified")
 
+    options.formats = formats
+
     format_urls = defaultdict(list)
     for h in options.hosts:
         # The last two parts of a host is the actual hostname:port. Any parts
@@ -178,12 +181,24 @@ def main(name=None):
     if missing_fmt_hosts:
         parser.error("no hosts capable of signing formats: %s" % " ".join(missing_fmt_hosts))
 
+    return options, args
+
+
+# main {{{1
+def main(name=None):
+    if name not in (None, '__main__'):
+        return
+
+    options, args = parse_cmdln_opts(sys.argv[1:])
+
+    logging.basicConfig(
+        level=options.log_level, format="%(asctime)s - %(message)s")
     log.debug("in %s", os.getcwd())
 
     # TODO requests options.cert
     token = open(options.tokenfile, 'rb').read()
 
-    for fmt in formats:
+    for fmt in options.formats:
         urls = format_urls[fmt]
         random.shuffle(urls)
 
