@@ -16,7 +16,7 @@ def getfile(baseurl, filehash, format_, cert, method=requests.get):
     return method(url, verify=cert)
 
 
-def get_token(baseurl, username, password, slave_ip, duration, method=requests.post):
+def get_token(baseurl, username, password, slave_ip, duration, cert, method=requests.post):
     auth = base64.encodestring('%s:%s' % (username, password)).rstrip('\n')
     url = '%s/token' % baseurl
     log.debug("get_token: %s", url)
@@ -27,7 +27,7 @@ def get_token(baseurl, username, password, slave_ip, duration, method=requests.p
     headers = {
         'Authorization': 'Basic %s' % auth,
     }
-    return method(url, data=payload, headers=headers)
+    return method(url, data=payload, headers=headers, verify=cert)
 
 
 def overwrite_file(path1, path2):
@@ -131,9 +131,9 @@ def remote_signfile(options, urls, filename, fmt, token, dest=None):
                 log.info("Copying %s to cache %s", dest, cached_fn)
                 copyfile(dest, cached_fn)
             break
-        except requests.HTTPError as e:
+        except requests.HTTPError:
             try:
-                if 'X-Pending' in e.headers:
+                if 'X-Pending' in r.headers:
                     log.debug("%s: pending; try again in a bit", filehash)
                     time.sleep(15)
                     pendings += 1
@@ -150,7 +150,7 @@ def remote_signfile(options, urls, filename, fmt, token, dest=None):
                     nonce = open(options.noncefile, 'rb').read()
                 except IOError:
                     nonce = ""
-                r = uploadfile(url, filename, fmt, token, nonce=nonce)
+                r = uploadfile(url, filename, fmt, token, nonce, options.cert)
                 r.raise_for_status()
                 nonce = r.headers['X-Nonce']
                 open(options.noncefile, 'wb').write(nonce)
@@ -173,7 +173,7 @@ def remote_signfile(options, urls, filename, fmt, token, dest=None):
     return True
 
 
-def uploadfile(baseurl, filename, format_, token, nonce, method=requests.post):
+def uploadfile(baseurl, filename, format_, token, nonce, cert, method=requests.post):
     """Uploads file (given by `filename`) to server at `baseurl`.
 
     `sesson_key` and `nonce` are string values that get passed as POST
@@ -189,4 +189,4 @@ def uploadfile(baseurl, filename, format_, token, nonce, method=requests.post):
         'nonce': nonce,
     }
 
-    return method("%s/sign/%s" % (baseurl, format_), files=files, data=payload)
+    return method("%s/sign/%s" % (baseurl, format_), files=files, data=payload, verify=cert)
