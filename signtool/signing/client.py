@@ -1,5 +1,5 @@
 import base64
-from six.moves.urllib.request import urlopen, Request, build_opener, install_opener
+from six.moves.urllib.request import urlopen, Request
 from six.moves.urllib.error import HTTPError, URLError
 import os
 import hashlib
@@ -196,61 +196,6 @@ def remote_signfile(options, urls, filename, fmt, token, dest=None):
             errors += 1
             continue
     return True
-
-
-def buildValidatingOpener(ca_certs):
-    """Build and register an HTTPS connection handler that validates that we're
-    talking to a host matching ca_certs (a file containing a list of
-    certificates we accept.
-
-    Subsequent calls to HTTPS urls will validate that we're talking to an acceptable server.
-    """
-    try:
-        from poster.streaminghttp import StreamingHTTPSHandler as HTTPSHandler, \
-            StreamingHTTPSConnection as HTTPSConnection
-        assert HTTPSHandler  # pyflakes
-        assert HTTPSConnection  # pyflakes
-    except ImportError:
-        from six.moves.http_client import HTTPSConnection
-        from six.moves.urllib.request import HTTPSHandler
-
-    import ssl
-
-    class VerifiedHTTPSConnection(HTTPSConnection):
-        def connect(self):
-            # overrides the version in httplib so that we do
-            #    certificate verification
-            # sock = socket.create_connection((self.host, self.port),
-                                            # self.timeout)
-            # if self._tunnel_host:
-                # self.sock = sock
-                # self._tunnel()
-
-            sock = socket.socket()
-            sock.connect((self.host, self.port))
-
-            # wrap the socket using verification with the root
-            #    certs in trusted_root_certs
-            self.sock = ssl.wrap_socket(sock,
-                                        self.key_file,
-                                        self.cert_file,
-                                        cert_reqs=ssl.CERT_REQUIRED,
-                                        ca_certs=ca_certs,
-                                        ssl_version=ssl.PROTOCOL_TLSv1,
-                                        )
-
-    # wraps https connections with ssl certificate verification
-    class VerifiedHTTPSHandler(HTTPSHandler):
-        def __init__(self, connection_class=VerifiedHTTPSConnection):
-            self.specialized_conn_class = connection_class
-            HTTPSHandler.__init__(self)
-
-        def https_open(self, req):
-            return self.do_open(self.specialized_conn_class, req)
-
-    https_handler = VerifiedHTTPSHandler()
-    opener = build_opener(https_handler)
-    install_opener(opener)
 
 
 def uploadfile(baseurl, filename, format_, token, nonce):
