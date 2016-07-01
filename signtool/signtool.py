@@ -3,6 +3,7 @@
 
 If no include patterns are specified, all files will be considered. -i/-x only
 have effect when signing entire directories."""
+from __future__ import absolute_import, division, print_function
 from collections import defaultdict
 import logging
 import os
@@ -185,18 +186,7 @@ def parse_cmdln_opts(cmdln_args):
     return options, args
 
 
-# main {{{1
-def main(name=None):
-    if name not in (None, '__main__'):
-        return
-
-    options, args = parse_cmdln_opts(sys.argv[1:])
-
-    logging.basicConfig(
-        level=options.log_level, format="%(asctime)s - %(message)s")
-    log.debug("in %s", os.getcwd())
-
-    # TODO requests options.cert
+def sign(options, args):
     token = open(options.tokenfile, 'rb').read()
 
     for fmt in options.formats:
@@ -241,6 +231,17 @@ def main(name=None):
                 log.debug("unpacking %s", fd)
                 unpacktar(fd + '.tar.gz', os.getcwd())
                 os.unlink(fd + '.tar.gz')
+
+
+# main {{{1
+def main(name=None):
+    if name in (None, '__main__'):
+        options, args = parse_cmdln_opts(sys.argv[1:])
+        logging.basicConfig(
+            level=options.log_level, format="%(asctime)s - %(message)s")
+        log.debug("in %s", os.getcwd())
+        sign(options, args)
+        log.info("Done.")
 
 
 main(name=__name__)
