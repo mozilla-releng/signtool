@@ -7,23 +7,13 @@ import sys
 
 deps = [
     'pefile==2016.3.28',
+    'requests',
     'six',
 ]
 
-if sys.version_info[:2] == (2, 7):
-    deps.extend([
-        'poster',
-    ])
-
-if sys.version_info >= (3, 5):
-    """If running on py3, you need to `pip install -r requirements-py3.txt` after
-    running setup.py, until the dependencies either support py3 or we drop their
-    use."""
-    pass
-
 setup(
     name="signtool",
-    version="1.0.9a",
+    version="2.0.0a",
     description="Mozilla Signing Tool",
     author="Release Engineers",
     author_email="release+python@mozilla.com",
@@ -39,7 +29,6 @@ setup(
     },
     # include files listed in MANIFEST.in
     include_package_data=True,
-    package_data={ "": ["requirements-py3.txt"]},
     classifiers=(
         "Intended Audience :: Developers",
         "Natural Language :: English",
