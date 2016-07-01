@@ -11,7 +11,7 @@ import urllib
 # TODO: Use util.command
 from subprocess import check_call
 
-from poster.encode import multipart_encode
+from poster.encode import multipart_encode, MultipartParam
 
 from signtool.util.file import sha1sum, copyfile
 
@@ -264,13 +264,17 @@ def uploadfile(baseurl, filename, format_, token, nonce):
     try:
         fp = open(filename, 'rb')
 
+        # from http://stackoverflow.com/questions/10546437/problems-using-multipart-encode-poster-library
+        items = []
         params = {
-            'filedata': fp,
             'sha1': filehash,
             'filename': os.path.basename(filename),
             'token': token,
             'nonce': nonce,
         }
+        for name, value in params.items():
+            items.append(MultipartParam(name, value))
+        items.append(MultipartParam.from_file('filedata', fp))
 
         datagen, headers = multipart_encode(params)
         r = Request(
