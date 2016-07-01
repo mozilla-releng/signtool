@@ -261,24 +261,19 @@ def uploadfile(baseurl, filename, format_, token, nonce):
     """
     filehash = sha1sum(filename)
 
-    try:
-        fp = open(filename, 'rb')
+    # from http://stackoverflow.com/questions/10546437/problems-using-multipart-encode-poster-library
+    items = []
+    params = {
+        'sha1': filehash,
+        'filename': os.path.basename(filename),
+        'token': token,
+        'nonce': nonce,
+    }
+    for name, value in params.items():
+        items.append(MultipartParam(name, value))
+    items.append(MultipartParam.from_file('filedata', filename))
 
-        # from http://stackoverflow.com/questions/10546437/problems-using-multipart-encode-poster-library
-        items = []
-        params = {
-            'sha1': filehash,
-            'filename': os.path.basename(filename),
-            'token': token,
-            'nonce': nonce,
-        }
-        for name, value in params.items():
-            items.append(MultipartParam(name, value))
-        items.append(MultipartParam.from_file('filedata', fp))
-
-        datagen, headers = multipart_encode(params)
-        r = Request(
-            "%s/sign/%s" % (baseurl, format_), datagen, headers)
-        return urlopen(r)
-    finally:
-        fp.close()
+    datagen, headers = multipart_encode(items)
+    r = Request(
+        "%s/sign/%s" % (baseurl, format_), datagen, headers)
+    return urlopen(r)
