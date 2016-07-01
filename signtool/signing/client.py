@@ -42,17 +42,9 @@ def check_cached_fn(options, cached_fn, filehash, filename, dest):
     log.debug("%s: checking cache", filehash)
     if os.path.exists(cached_fn):
         log.info("%s: exists in the cache; copying to %s", filehash, dest)
-        cached_fp = open(cached_fn, 'rb')
         tmpfile = dest + '.tmp'
-        hsh = hashlib.new('sha1')
-        with open(tmpfile, 'wb') as fp:
-            while True:
-                data = cached_fp.read(1024 ** 2)
-                if not data:
-                    break
-                hsh.update(data)
-                fp.write(data)
-        newhash = hsh.hexdigest()
+        copyfile(cached_fn, tmpfile)
+        hsh = sha1sum(tmpfile)
         if os.path.exists(dest):
             os.unlink(dest)
         os.rename(tmpfile, dest)
