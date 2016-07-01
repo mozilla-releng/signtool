@@ -9,10 +9,18 @@ import os
 import pefile
 import site
 import sys
+from optparse import OptionParser
+import random
 
-from signtool.signing.client import remote_signfile, buildValidatingOpener
+from signtool.signing.client import remote_signfile
 from signtool.util.archives import packtar, unpacktar
 from signtool.util.paths import findfiles
+
+
+ALLOWED_FORMATS = (
+    "sha2signcode", "signcode", "osslsigncode", "gpg", "mar", "dmg",
+    "dmgv2", "jar", "emevoucher"
+)
 
 log = logging.getLogger(__name__)
 
@@ -36,12 +44,10 @@ def is_authenticode_signed(filename):
             p.close()
 
 
-def main():
-    allowed_formats = ("sha2signcode", "signcode", "osslsigncode", "gpg", "mar", "dmg",
-                       "dmgv2", "jar", "emevoucher")
+def main(name=None):
+    if name not in (None, '__main__'):
+        return
 
-    from optparse import OptionParser
-    import random
     parser = OptionParser(__doc__)
     parser.set_defaults(
         hosts=[],
@@ -70,7 +76,7 @@ def main():
     parser.add_option("-o", "--output-file", dest="output_file",
                       help="output file; if not set then files are replaced with signed copies. This can only be used when signing a single file")
     parser.add_option("-f", "--formats", dest="formats", action="append",
-                      help="signing formats (one or more of %s)" % ", ".join(allowed_formats))
+                      help="signing formats (one or more of %s)" % ", ".join(ALLOWED_FORMATS))
     parser.add_option("-q", "--quiet", dest="log_level", action="store_const",
                       const=logging.WARN)
     parser.add_option(
@@ -119,10 +125,10 @@ def main():
     for fmt in options.formats:
         if "," in fmt:
             for fmt in fmt.split(","):
-                if fmt not in allowed_formats:
+                if fmt not in ALLOWED_FORMATS:
                     parser.error("invalid format: %s" % fmt)
                 formats.append(fmt)
-        elif fmt not in allowed_formats:
+        elif fmt not in ALLOWED_FORMATS:
             parser.error("invalid format: %s" % fmt)
         else:
             formats.append(fmt)
@@ -174,7 +180,7 @@ def main():
 
     log.debug("in %s", os.getcwd())
 
-    buildValidatingOpener(options.cert)
+    # TODO requests options.cert
     token = open(options.tokenfile, 'rb').read()
 
     for fmt in formats:
@@ -221,5 +227,4 @@ def main():
                 os.unlink(fd + '.tar.gz')
 
 
-if __name__ == '__main__':
-    main()
+main(name=__name__)
