@@ -1,6 +1,7 @@
 import base64
 import os
 import requests
+import six
 from subprocess import check_call
 import time
 

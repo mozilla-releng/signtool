@@ -7,6 +7,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 - switch to `requests` instead of `poster`+`urllib`
 - refactor to be more clean architecture oriented
+- switch to `pytest` from `nosetests`
 
 ### Fixed
 
