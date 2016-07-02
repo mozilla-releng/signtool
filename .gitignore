@@ -1,6 +1,11 @@
-.coverage
+.cache
 .tox
-coverage.xml
-signtool.egg-info/
-nosetests.xml
+
 *.pyc
+__pycache__
+
+.coverage
+coverage.xml
+htmlcov
+
+signtool.egg-info/
