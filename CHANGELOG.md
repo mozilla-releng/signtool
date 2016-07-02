@@ -3,6 +3,14 @@ All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
+### Changed
+
+- switch to `requests` instead of `poster`+`urllib`
+- refactor to be more clean architecture oriented
+
+### Fixed
+
+- py3 signtool working again
 
 ## [1.0.8] - 2016-06-21
 ### Added
