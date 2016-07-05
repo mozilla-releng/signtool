@@ -1,4 +1,3 @@
-import base64
 import os
 import requests
 import six
@@ -15,20 +14,6 @@ def getfile(baseurl, filehash, format_, cert, method=requests.get):
     url = "%s/sign/%s/%s" % (baseurl, format_, filehash)
     log.debug("%s: GET %s", filehash, url)
     return method(url, verify=cert)
-
-
-def get_token(baseurl, username, password, slave_ip, duration, cert, method=requests.post):
-    auth = base64.encodestring('%s:%s' % (username, password)).rstrip('\n')
-    url = '%s/token' % baseurl
-    log.debug("get_token: %s", url)
-    payload = {
-        'slave_ip': slave_ip,
-        'duration': duration,
-    }
-    headers = {
-        'Authorization': 'Basic %s' % auth,
-    }
-    return method(url, data=payload, headers=headers, verify=cert)
 
 
 def overwrite_file(path1, path2):
