@@ -95,6 +95,6 @@ def test_cached_fn_nss():
                 options, os.path.join(tmpdir, "src"), "badsha", target, target
             )
             assert result is True
-            m.assert_called_once_with('echo "{}"'.format(target), shell=True)
+            m.assert_called_once_with('echo "%s"' % target, shell=True)
         with open(target, "r") as fh:
             assert fh.read().rstrip() == CACHE[0]
