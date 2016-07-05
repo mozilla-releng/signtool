@@ -1,8 +1,13 @@
 from __future__ import print_function
+from contextlib import contextmanager
 import mock
+import optparse
 import os
+import shutil
 import signtool.signing.client as sclient
 import tempfile
+
+CACHE = ("cached", "5dc0f60874af2d0cb171f07df7ee02cdc8352ce3")
 
 
 # getfile {{{1
@@ -25,7 +30,7 @@ def overwrite_file_helper(empty=True):
         else:
             assert(os.path.exists(t2))
         with open(t1, "w") as fh:
-            print(test_string, file=fh)
+            print(test_string, file=fh, end='')
         sclient.overwrite_file(t1, t2)
         with open(t2, "r") as fh:
             assert fh.read().rstrip() == test_string
@@ -43,3 +48,53 @@ def test_overwrite_nonexistent_file():
 
 def test_overwrite_existing_file():
     overwrite_file_helper(empty=False)
+
+
+# check_cached_fn {{{1
+@contextmanager
+def cache_dir():
+    tmpdir = tempfile.mkdtemp()
+    with open(os.path.join(tmpdir, "src"), "w") as fh:
+        print(CACHE[0], file=fh, end="\n")
+    yield tmpdir
+    shutil.rmtree(tmpdir)
+
+
+def test_cached_fn_noop():
+    result = sclient.check_cached_fn(
+        optparse.Values(), "nonexistent_path", "hash", "filename", "src"
+    )
+    assert result is None
+
+
+def test_cached_fn_no_nss():
+    options = optparse.Values()
+    options.nsscmd = None
+    with cache_dir() as tmpdir:
+        target = os.path.join(tmpdir, "foo.exe")
+        result = sclient.check_cached_fn(
+            options, os.path.join(tmpdir, "src"), CACHE[1], target, target
+        )
+        assert result is True
+        assert not os.path.exists(os.path.join(tmpdir, "foo.chk"))
+        with open(target, "r") as fh:
+            assert fh.read().rstrip() == CACHE[0]
+
+
+def test_cached_fn_nss():
+    options = optparse.Values()
+    options.nsscmd = "echo"
+    with cache_dir() as tmpdir:
+        target = os.path.join(tmpdir, "foo.exe")
+        chkfile = os.path.join(tmpdir, "foo.chk")
+        # create chkfile to force nss signature
+        with open(chkfile, "w") as fh:
+            print("blah", file=fh)
+        with mock.patch('signtool.signing.client.check_call') as m:
+            result = sclient.check_cached_fn(
+                options, os.path.join(tmpdir, "src"), "badsha", target, target
+            )
+            assert result is True
+            m.assert_called_once_with('echo "{}"'.format(target), shell=True)
+        with open(target, "r") as fh:
+            assert fh.read().rstrip() == CACHE[0]
