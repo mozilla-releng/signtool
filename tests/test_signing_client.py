@@ -1,3 +1,4 @@
+from __future__ import print_function
 import mock
 import os
 import signtool.signing.client as sclient
@@ -12,28 +13,33 @@ def test_getfile():
 
 
 # overwrite_file {{{1
-def test_overwrite_existing_file():
+def overwrite_file_helper(empty=True):
     test_string = "blahdeblah!"
-    _, t1 = tempfile.mkstemp()
-    _, t2 = tempfile.mkstemp()
-    assert(os.path.exists(t1))
-    assert(os.path.exists(t2))
-    with open(t1, "w") as fh:
-        print(test_string, file=fh)
-    sclient.overwrite_file(t1, t2)
-    with open(t2, "r") as fh:
-        assert fh.read().rstrip() == test_string
+    try:
+        _, t1 = tempfile.mkstemp()
+        _, t2 = tempfile.mkstemp()
+        assert(os.path.exists(t1))
+        if empty:
+            os.remove(t2)
+            assert(not os.path.exists(t2))
+        else:
+            assert(os.path.exists(t2))
+        with open(t1, "w") as fh:
+            print(test_string, file=fh)
+        sclient.overwrite_file(t1, t2)
+        with open(t2, "r") as fh:
+            assert fh.read().rstrip() == test_string
+    finally:
+        for f in t1, t2:
+            try:
+                os.remove(f)
+            except OSError:
+                pass
 
 
 def test_overwrite_nonexistent_file():
-    test_string = "blahdeblah!"
-    _, t1 = tempfile.mkstemp()
-    _, t2 = tempfile.mkstemp()
-    os.remove(t2)
-    assert(os.path.exists(t1))
-    assert(not os.path.exists(t2))
-    with open(t1, "w") as fh:
-        print(test_string, file=fh)
-    sclient.overwrite_file(t1, t2)
-    with open(t2, "r") as fh:
-        assert fh.read().rstrip() == test_string
+    overwrite_file_helper(empty=True)
+
+
+def test_overwrite_existing_file():
+    overwrite_file_helper(empty=False)
