@@ -1,6 +1,7 @@
 import mock
 import os
 import pytest
+import subprocess
 
 import signtool.util.paths as paths
 
@@ -32,6 +33,24 @@ def test_find_files(tmpdir):
         fh.write("world")
     assert paths.findfiles(tmp) == [os.path.join(tmp, "foo"), os.path.join(tmp, "d1", "bar")]
     assert paths.finddirs(tmp) == [os.path.join(tmp, "d1")]
+
+
+def test_find_files2(tmpdir):
+    tmp = tmpdir.strpath
+    orig_dir = os.getcwd()
+    tarball = os.path.abspath(os.path.join(os.path.dirname(__file__), "data", "dirtree.tgz"))
+    try:
+        os.chdir(tmp)
+        subprocess.check_call(["tar", "xf", tarball])
+        files = paths.findfiles(['dir1', 'dir2', 'no_dir'], includes=('*.*', ), excludes=('*.tar.*', ))
+        assert sorted(files) == sorted([
+            "no_dir",
+            os.path.join("dir1", "file1.exe"),
+            os.path.join("dir1", "dir1_a", "dir1_a_1", "file1_a_1.dmg"),
+            os.path.join("dir1", "dir1_a", "dir1_a_1", "file1_a_1.jpg"),
+        ])
+    finally:
+        os.chdir(orig_dir)
 
 
 @pytest.mark.parametrize("path_tuple", CONVERT_PARAMS)
