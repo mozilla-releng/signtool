@@ -58,14 +58,13 @@ def test_authenticode_exception(pe):
 # how little these cmdln opts have changed
 # parse_cmdln helpers {{{2
 BASE_ARGS = ["-H", "gpg:mar:jar:hostname:port", "-c", "cert", "-t", "token", "-n", "nonce"]
-NSS_ARGS = BASE_ARGS + ['--nsscmd', 'echo']
 FMTS_ARGS = BASE_ARGS + ['-i', 'foo', '-x', 'bar', "-f"]
 MISSING_FMTS_PARAMS = ("dmgv2", "signcode,emevoucher")
 INVALID_FMTS_PARAMS = ("foobar", "mar,foobar")
 GOOD_FMTS_PARAMS = (
-    ("mar", ("mar", )),
-    ("mar,jar", ("mar", "jar")),
-    ("gpg,jar", ("jar", "gpg"))
+    (["mar", "-H", "hostname:port"], ("mar", )),
+    (["mar,jar", "-d", "foo"], ("mar", "jar")),
+    (["gpg,jar", "-d", "."], ("jar", "gpg"))
 )
 MISSING_ARGS_PARAMS = (
     ([], "at least one host is required"),
@@ -74,6 +73,14 @@ MISSING_ARGS_PARAMS = (
     (BASE_ARGS[:6], "nonce file is required"),
     (BASE_ARGS, "no formats specified"),
 )
+GOOD_ARGS = BASE_ARGS + ['-f', 'gpg']
+NSS_ARGS = GOOD_ARGS + ['--nsscmd']
+NSS_PARAMS = (
+    ("win32", "asdf", "asdf"),
+    ("win32", "/c/asdf", "c:/asdf"),
+    ("not-win32", "asdf", "asdf"),
+    ("not-win32", "/c/asdf", "/c/asdf"),
+)
 
 
 class ParserHelper(optparse.OptionParser):
@@ -81,7 +88,7 @@ class ParserHelper(optparse.OptionParser):
     """
     msg = None
 
-    def error(self, msg):
+    def error(self, msg, *args):
         self.msg = msg
         raise SystemExit(msg)
 
@@ -118,11 +125,33 @@ def test_parse_missing_cert():
     assert parser.msg == "certificate not found"
 
 
-def test_parse_nss():
-    pass
-    # TODO
+def test_parse_output_file():
+    parser = ParserHelper()
+    with env():
+        with pytest.raises(SystemExit):
+            stool.parse_cmdln_opts(parser, GOOD_ARGS + ['-o', '.', "."])
+    assert parser.msg == "-o / --output-file can only be used when signing a single file"
 
 
+def test_parse_output_dir():
+    parser = ParserHelper()
+    with env():
+        with pytest.raises(SystemExit):
+            stool.parse_cmdln_opts(parser, GOOD_ARGS + ['-d', 'cert', "."])
+    assert parser.msg.startswith("output_dir (")
+
+
+@pytest.mark.parametrize("args", NSS_PARAMS)
+def test_parse_nss(args):
+    log.debug(args)
+    parser = ParserHelper()
+    with mock.patch('sys.platform', new=args[0]):
+        with env():
+            options, _ = stool.parse_cmdln_opts(parser, NSS_ARGS + [args[1]])
+    assert options.nsscmd == args[2]
+
+
+# parse_cmdln fmts {{{2
 @pytest.mark.parametrize("fmt", MISSING_FMTS_PARAMS)
 def test_missing_fmts(fmt):
     log.info(fmt)
@@ -148,5 +177,5 @@ def test_good_fmts(args):
     log.info(args)
     parser = ParserHelper()
     with env():
-        options, _ = stool.parse_cmdln_opts(parser, FMTS_ARGS + [args[0]])
+        options, _ = stool.parse_cmdln_opts(parser, FMTS_ARGS + args[0])
     assert options.formats == list(args[1])
