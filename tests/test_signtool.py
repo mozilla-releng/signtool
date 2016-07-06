@@ -1,9 +1,14 @@
 from __future__ import print_function
+import logging
 import mock
 import optparse
+import os
 import pytest
+import shutil
 import signtool.signtool as stool
-import sys
+import tempfile
+
+log = logging.getLogger(__name__)
 
 
 # authenticode {{{1
@@ -48,17 +53,39 @@ def test_authenticode_exception(pe):
 
 
 # parse_cmdln_opts {{{1
+# These are fragile tests, but better something than nothing, especially given
+# how little these cmdln opts have changed
+MISSING_ARGS = (
+    ([], "at least one host is required"),
+    (["-H", "host"], "certificate is required"),
+    (["-H", "host", "-c", "cert"], "token file is required"),
+    (["-H", "host", "-c", "cert", "-t", "token"], "nonce file is required"),
+)
+
+
 class ParserHelper(optparse.OptionParser):
     """Store errors from parse_cmdln_opts
     """
     msg = None
+
     def error(self, msg):
         self.msg = msg
-        raise Exception()
+        raise SystemExit(msg)
 
 
-def test_parse_no_args():
+@pytest.mark.parametrize("args", MISSING_ARGS)
+def test_parse_missing_args(args):
+    log.info(args)
     parser = ParserHelper()
-    with pytest.raises(Exception):
-        stool.parse_cmdln_opts(parser, [])
-    assert parser.msg.startswith("at least one host")
+    orig_dir = os.getcwd()
+    try:
+        tmpdir = tempfile.mkdtemp()
+        os.chdir(tmpdir)
+        with open("cert", "w") as fh:
+            print("foo", file=fh)
+        with pytest.raises(SystemExit):
+            stool.parse_cmdln_opts(parser, args[0])
+    finally:
+        os.chdir(orig_dir)
+        shutil.rmtree(tmpdir)
+    assert parser.msg == args[1]
