@@ -98,3 +98,26 @@ def test_cached_fn_nss():
             m.assert_called_once_with('echo "%s"' % target, shell=True)
         with open(target, "r") as fh:
             assert fh.read().rstrip() == CACHE[0]
+
+
+# uploadfile {{{1
+def test_uploadfile():
+    m = mock.MagicMock()
+    with cache_dir() as tmpdir:
+        tmpfile = os.path.join(tmpdir, "src")
+        sclient.uploadfile("baseurl", tmpfile, "format", "token", "nonce", "cert", method=m)
+        assert len(m.call_args_list) == 1
+        args, kwargs = m.call_args
+        assert args == ("baseurl/sign/format", )
+        assert kwargs['files']['filedata'].read() == b'cached\n'
+        assert list(kwargs['files'].keys()) == ['filedata', ]
+        del(kwargs['files'])
+        assert kwargs == {
+            'data': {
+                'sha1': CACHE[1],
+                'filename': "src",
+                'token': 'token',
+                'nonce': 'nonce',
+            },
+            'verify': 'cert',
+        }
