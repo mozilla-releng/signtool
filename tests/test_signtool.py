@@ -57,13 +57,22 @@ def test_authenticode_exception(pe):
 # These are fragile tests, but better something than nothing, especially given
 # how little these cmdln opts have changed
 # parse_cmdln helpers {{{2
-BASE_ARGS = ["-H", "host", "-c", "cert", "-t", "token", "-n", "nonce"]
+BASE_ARGS = ["-H", "gpg:mar:jar:hostname:port", "-c", "cert", "-t", "token", "-n", "nonce"]
 NSS_ARGS = BASE_ARGS + ['--nsscmd', 'echo']
-MISSING_ARGS = (
+FMTS_ARGS = BASE_ARGS + ['-i', 'foo', '-x', 'bar', "-f"]
+MISSING_FMTS_PARAMS = ("dmgv2", "signcode,emevoucher")
+INVALID_FMTS_PARAMS = ("foobar", "mar,foobar")
+GOOD_FMTS_PARAMS = (
+    ("mar", ("mar", )),
+    ("mar,jar", ("mar", "jar")),
+    ("gpg,jar", ("jar", "gpg"))
+)
+MISSING_ARGS_PARAMS = (
     ([], "at least one host is required"),
     (BASE_ARGS[:2], "certificate is required"),
     (BASE_ARGS[:4], "token file is required"),
     (BASE_ARGS[:6], "nonce file is required"),
+    (BASE_ARGS, "no formats specified"),
 )
 
 
@@ -78,7 +87,7 @@ class ParserHelper(optparse.OptionParser):
 
 
 @contextmanager
-def cert():
+def env():
     orig_dir = os.getcwd()
     try:
         tmpdir = tempfile.mkdtemp()
@@ -92,11 +101,11 @@ def cert():
 
 
 # parse_cmdln tests {{{2
-@pytest.mark.parametrize("args", MISSING_ARGS)
+@pytest.mark.parametrize("args", MISSING_ARGS_PARAMS)
 def test_parse_missing_args(args):
     log.info(args)
     parser = ParserHelper()
-    with cert():
+    with env():
         with pytest.raises(SystemExit):
             stool.parse_cmdln_opts(parser, args[0])
     assert parser.msg == args[1]
@@ -111,3 +120,33 @@ def test_parse_missing_cert():
 
 def test_parse_nss():
     pass
+    # TODO
+
+
+@pytest.mark.parametrize("fmt", MISSING_FMTS_PARAMS)
+def test_missing_fmts(fmt):
+    log.info(fmt)
+    parser = ParserHelper()
+    with env():
+        with pytest.raises(SystemExit):
+            stool.parse_cmdln_opts(parser, FMTS_ARGS + [fmt])
+    assert parser.msg.startswith("no hosts capable of signing")
+
+
+@pytest.mark.parametrize("fmt", INVALID_FMTS_PARAMS)
+def test_invalid_fmts(fmt):
+    log.info(fmt)
+    parser = ParserHelper()
+    with env():
+        with pytest.raises(SystemExit):
+            stool.parse_cmdln_opts(parser, FMTS_ARGS + [fmt])
+    assert parser.msg.startswith("invalid format:")
+
+
+@pytest.mark.parametrize("args", GOOD_FMTS_PARAMS)
+def test_good_fmts(args):
+    log.info(args)
+    parser = ParserHelper()
+    with env():
+        options, _ = stool.parse_cmdln_opts(parser, FMTS_ARGS + [args[0]])
+    assert options.formats == list(args[1])
