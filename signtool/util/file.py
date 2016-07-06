@@ -5,7 +5,6 @@ import shutil
 import six
 import hashlib
 import tempfile
-from six.moves.configparser import RawConfigParser
 log = logging.getLogger(__name__)
 
 
@@ -29,14 +28,6 @@ def directoryContains(directory, suffix):
     if not hit:
         log.error("Could not find *%s in %s" % (suffix, directory))
     return hit
-
-
-def copyfile(src, dst, copymode=True):
-    """Copy src to dst, preserving permissions and times if copymode is True"""
-    shutil.copyfile(src, dst)
-    if copymode:
-        shutil.copymode(src, dst)
-        shutil.copystat(src, dst)
 
 
 def sha1sum(f):
@@ -78,34 +69,3 @@ def safe_copyfile(src, dest):
     shutil.copyfileobj(open(src, 'rb'), os.fdopen(fd, 'wb'))
     shutil.copystat(src, tmpname)
     os.rename(tmpname, dest)
-
-
-def load_config(filename):
-    config = RawConfigParser()
-    if config.read([filename]) != [filename]:
-        return None
-    return config
-
-
-def get_config(config, section, option, default):
-    if config.has_section(section) and config.has_option(section, option):
-        return config.get(section, option)
-    return default
-
-
-def get_config_int(config, section, option, default):
-    if config.has_section(section) and config.has_option(section, option):
-        return config.getint(section, option)
-    return default
-
-
-def get_config_bool(config, section, option, default):
-    if config.has_section(section) and config.has_option(section, option):
-        return config.getboolean(section, option)
-    return default
-
-
-def touch(filename, timestamp=None):
-    """a command line touch, replacement"""
-    with open(filename, 'a'):
-        os.utime(filename, timestamp)

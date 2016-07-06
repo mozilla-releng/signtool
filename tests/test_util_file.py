@@ -1,7 +1,7 @@
 import hashlib
 import os
 
-from signtool.util.file import compare, sha1sum, copyfile
+from signtool.util.file import compare, sha1sum, safe_copyfile
 
 
 class TestFileOps(object):
@@ -28,7 +28,7 @@ class TestFileOps(object):
 
     def testCopyFile(self, tmpdir):
         tmp = os.path.join(tmpdir.strpath, "t")
-        copyfile(__file__, tmp)
+        safe_copyfile(__file__, tmp)
         assert sha1sum(__file__) == sha1sum(tmp)
         assert os.stat(__file__).st_mode == os.stat(tmp).st_mode
         assert int(os.stat(__file__).st_mtime) == int(os.stat(tmp).st_mtime)

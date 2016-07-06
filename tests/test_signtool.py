@@ -56,7 +56,9 @@ def test_authenticode_exception(pe):
 # parse_cmdln_opts {{{1
 # These are fragile tests, but better something than nothing, especially given
 # how little these cmdln opts have changed
+# parse_cmdln helpers {{{2
 BASE_ARGS = ["-H", "host", "-c", "cert", "-t", "token", "-n", "nonce"]
+NSS_ARGS = BASE_ARGS + ['--nsscmd', 'echo']
 MISSING_ARGS = (
     ([], "at least one host is required"),
     (BASE_ARGS[:2], "certificate is required"),
@@ -89,6 +91,7 @@ def cert():
         shutil.rmtree(tmpdir)
 
 
+# parse_cmdln tests {{{2
 @pytest.mark.parametrize("args", MISSING_ARGS)
 def test_parse_missing_args(args):
     log.info(args)
@@ -104,3 +107,7 @@ def test_parse_missing_cert():
     with pytest.raises(SystemExit):
         stool.parse_cmdln_opts(parser, BASE_ARGS)
     assert parser.msg == "certificate not found"
+
+
+def test_parse_nss():
+    pass

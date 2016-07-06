@@ -4,7 +4,7 @@ import six
 from subprocess import check_call
 import time
 
-from signtool.util.file import sha1sum, copyfile
+from signtool.util.file import sha1sum, safe_copyfile
 
 import logging
 log = logging.getLogger(__name__)
@@ -28,7 +28,7 @@ def check_cached_fn(options, cached_fn, filehash, filename, dest):
     if os.path.exists(cached_fn):
         log.info("%s: exists in the cache; copying to %s", filehash, dest)
         tmpfile = dest + '.tmp'
-        copyfile(cached_fn, tmpfile)
+        safe_copyfile(cached_fn, tmpfile)
         newhash = sha1sum(tmpfile)
         overwrite_file(tmpfile, dest)
         log.info("%s: OK", filehash)
@@ -115,7 +115,7 @@ def remote_signfile(options, urls, filename, fmt, token, dest=None):
                     log.debug("Creating %s", options.cachedir)
                     os.makedirs(options.cachedir)
                 log.info("Copying %s to cache %s", dest, cached_fn)
-                copyfile(dest, cached_fn)
+                safe_copyfile(dest, cached_fn)
             break
         except requests.HTTPError:
             try:
