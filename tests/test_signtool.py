@@ -1,4 +1,5 @@
 from __future__ import print_function
+from contextlib import contextmanager
 import logging
 import mock
 import optparse
@@ -55,11 +56,12 @@ def test_authenticode_exception(pe):
 # parse_cmdln_opts {{{1
 # These are fragile tests, but better something than nothing, especially given
 # how little these cmdln opts have changed
+BASE_ARGS = ["-H", "host", "-c", "cert", "-t", "token", "-n", "nonce"]
 MISSING_ARGS = (
     ([], "at least one host is required"),
-    (["-H", "host"], "certificate is required"),
-    (["-H", "host", "-c", "cert"], "token file is required"),
-    (["-H", "host", "-c", "cert", "-t", "token"], "nonce file is required"),
+    (BASE_ARGS[:2], "certificate is required"),
+    (BASE_ARGS[:4], "token file is required"),
+    (BASE_ARGS[:6], "nonce file is required"),
 )
 
 
@@ -73,19 +75,32 @@ class ParserHelper(optparse.OptionParser):
         raise SystemExit(msg)
 
 
-@pytest.mark.parametrize("args", MISSING_ARGS)
-def test_parse_missing_args(args):
-    log.info(args)
-    parser = ParserHelper()
+@contextmanager
+def cert():
     orig_dir = os.getcwd()
     try:
         tmpdir = tempfile.mkdtemp()
         os.chdir(tmpdir)
         with open("cert", "w") as fh:
-            print("foo", file=fh)
-        with pytest.raises(SystemExit):
-            stool.parse_cmdln_opts(parser, args[0])
+            print("cert", file=fh)
+        yield
     finally:
         os.chdir(orig_dir)
         shutil.rmtree(tmpdir)
+
+
+@pytest.mark.parametrize("args", MISSING_ARGS)
+def test_parse_missing_args(args):
+    log.info(args)
+    parser = ParserHelper()
+    with cert():
+        with pytest.raises(SystemExit):
+            stool.parse_cmdln_opts(parser, args[0])
     assert parser.msg == args[1]
+
+
+def test_parse_missing_cert():
+    parser = ParserHelper()
+    with pytest.raises(SystemExit):
+        stool.parse_cmdln_opts(parser, BASE_ARGS)
+    assert parser.msg == "certificate not found"
