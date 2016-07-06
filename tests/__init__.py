@@ -5,7 +5,7 @@ import tempfile
 
 
 @contextmanager
-def env():
+def signtool_env():
     orig_dir = os.getcwd()
     try:
         tmpdir = tempfile.mkdtemp()

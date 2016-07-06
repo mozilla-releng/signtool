@@ -4,7 +4,7 @@ import mock
 import optparse
 import pytest
 import signtool.signtool as stool
-from . import env
+from . import signtool_env
 
 log = logging.getLogger(__name__)
 
@@ -95,7 +95,7 @@ def test_authenticode_exception(pe):
 def test_parse_missing_args(args):
     log.info(args)
     parser = ParserHelper()
-    with env():
+    with signtool_env():
         with pytest.raises(SystemExit):
             stool.parse_cmdln_opts(parser, args[0])
     assert parser.msg == args[1]
@@ -110,7 +110,7 @@ def test_parse_missing_cert():
 
 def test_parse_output_file():
     parser = ParserHelper()
-    with env():
+    with signtool_env():
         with pytest.raises(SystemExit):
             stool.parse_cmdln_opts(parser, GOOD_ARGS + ['-o', '.', "."])
     assert parser.msg == "-o / --output-file can only be used when signing a single file"
@@ -118,7 +118,7 @@ def test_parse_output_file():
 
 def test_parse_output_dir():
     parser = ParserHelper()
-    with env():
+    with signtool_env():
         with pytest.raises(SystemExit):
             stool.parse_cmdln_opts(parser, GOOD_ARGS + ['-d', 'cert', "."])
     assert parser.msg.startswith("output_dir (")
@@ -129,7 +129,7 @@ def test_parse_nss(args):
     log.debug(args)
     parser = ParserHelper()
     with mock.patch('sys.platform', new=args[0]):
-        with env():
+        with signtool_env():
             options, _ = stool.parse_cmdln_opts(parser, NSS_ARGS + [args[1]])
     assert options.nsscmd == args[2]
 
@@ -138,7 +138,7 @@ def test_parse_nss(args):
 def test_missing_fmts(fmt):
     log.info(fmt)
     parser = ParserHelper()
-    with env():
+    with signtool_env():
         with pytest.raises(SystemExit):
             stool.parse_cmdln_opts(parser, FMTS_ARGS + [fmt])
     assert parser.msg.startswith("no hosts capable of signing")
@@ -148,7 +148,7 @@ def test_missing_fmts(fmt):
 def test_invalid_fmts(fmt):
     log.info(fmt)
     parser = ParserHelper()
-    with env():
+    with signtool_env():
         with pytest.raises(SystemExit):
             stool.parse_cmdln_opts(parser, FMTS_ARGS + [fmt])
     assert parser.msg.startswith("invalid format:")
@@ -158,7 +158,7 @@ def test_invalid_fmts(fmt):
 def test_good_fmts(args):
     log.info(args)
     parser = ParserHelper()
-    with env():
+    with signtool_env():
         options, _ = stool.parse_cmdln_opts(parser, FMTS_ARGS + args[0])
     assert options.formats == list(args[1])
 
@@ -168,7 +168,7 @@ def test_main(args):
     log.debug(args)
     with mock.patch.object(stool, 'sign'):
         with mock.patch('sys.argv', new=["signtool"] + GOOD_ARGS):
-            with env():
+            with signtool_env():
                 with mock.patch.object(stool, 'log') as l:
                     stool.main(name=args[0])
                     if args[1] is not None:
