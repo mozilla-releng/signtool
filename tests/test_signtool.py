@@ -1,7 +1,9 @@
 from __future__ import print_function
 import mock
+import optparse
 import pytest
 import signtool.signtool as stool
+import sys
 
 
 # authenticode {{{1
@@ -43,3 +45,20 @@ def test_authenticode_exception(pe):
             result = stool.is_authenticode_signed(None)
             assert result is False
             m.exception.assert_called_once_with('Problem parsing file')
+
+
+# parse_cmdln_opts {{{1
+class ParserHelper(optparse.OptionParser):
+    """Store errors from parse_cmdln_opts
+    """
+    msg = None
+    def error(self, msg):
+        self.msg = msg
+        raise Exception()
+
+
+def test_parse_no_args():
+    parser = ParserHelper()
+    with pytest.raises(Exception):
+        stool.parse_cmdln_opts(parser, [])
+    assert parser.msg.startswith("at least one host")

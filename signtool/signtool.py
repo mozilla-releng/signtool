@@ -46,12 +46,11 @@ def is_authenticode_signed(filename):
 
 
 # parse_cmdln_opts {{{1
-def parse_cmdln_opts(cmdln_args):
+def parse_cmdln_opts(parser, cmdln_args):
     """Rather than have this all clutter main(), let's split this out.
     Clean arch decision: rather than parsing sys.argv directly, pass
     sys.argv[1:] to this function (or any iterable for testing.)
     """
-    parser = OptionParser(__doc__)
     parser.set_defaults(
         hosts=[],
         cert=None,
@@ -236,7 +235,8 @@ def sign(options, args):
 # main {{{1
 def main(name=None):
     if name in (None, '__main__'):
-        options, args = parse_cmdln_opts(sys.argv[1:])
+        parser = OptionParser(__doc__)
+        options, args = parse_cmdln_opts(parser, sys.argv[1:])
         logging.basicConfig(
             level=options.log_level, format="%(asctime)s - %(message)s")
         log.debug("in %s", os.getcwd())
