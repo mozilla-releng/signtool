@@ -42,26 +42,6 @@ def sha1sum(f):
     return h.hexdigest()
 
 
-def safe_unlink(filename):
-    """unlink filename ignorning errors if the file doesn't exist"""
-    try:
-        if os.path.isdir(filename):
-            for root, dirs, files in os.walk(filename, topdown=True):
-                for f in files:
-                    fp = os.path.join(root, f)
-                    safe_unlink(fp)
-                os.rmdir(root)
-        else:
-            if os.path.exists(filename):
-                os.unlink(filename)
-    except OSError as e:
-        # Ignore "No such file or directory"
-        if e.errno == 2:
-            return
-        else:
-            raise
-
-
 def safe_copyfile(src, dest):
     """safely copy src to dest using a temporary intermediate and then renaming
     to dest"""
