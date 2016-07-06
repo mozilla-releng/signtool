@@ -179,3 +179,18 @@ def test_good_fmts(args):
     with env():
         options, _ = stool.parse_cmdln_opts(parser, FMTS_ARGS + args[0])
     assert options.formats == list(args[1])
+
+
+# main {{{1
+@pytest.mark.parametrize("args", (("__main__", "Done."), ("not-main", None)))
+def test_main(args):
+    log.debug(args)
+    with mock.patch.object(stool, 'sign'):
+        with mock.patch('sys.argv', new=["signtool"] + GOOD_ARGS):
+            with env():
+                with mock.patch.object(stool, 'log') as l:
+                    stool.main(name=args[0])
+                    if args[1] is not None:
+                        l.info.assert_called_once_with(args[1])
+                    else:
+                        assert len(l.info.call_args_list) == 0
