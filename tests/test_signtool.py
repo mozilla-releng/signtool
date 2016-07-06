@@ -47,6 +47,26 @@ class ParserHelper(optparse.OptionParser):
         raise SystemExit(msg)
 
 
+class ExpectedError(Exception):
+    pass
+
+
+@pytest.fixture(scope='function')
+def sign_options():
+    options = optparse.Values()
+    options.tokenfile = "token"
+    options.format_urls = {
+        "gpg": ["gpgurl1", "gpgurl2"],
+        "signcode": ["signcodeurl1", "signcodeurl2"],
+        "dmgv2": ["dmgurl1", "dmgurl2"],
+    }
+    options.includes = ['cert']
+    options.excludes = []
+    options.output_dir = None
+    options.formats = ["dmgv2", "signcode", "gpg"]
+    return options
+
+
 # authenticode {{{1
 @pytest.fixture(scope='function')
 def pe():
@@ -175,3 +195,18 @@ def test_main(args):
                         l.info.assert_called_once_with(args[1])
                     else:
                         assert len(l.info.call_args_list) == 0
+
+
+# sign {{{1
+@pytest.mark.parametrize("output_dir", ("foo", None))
+def test_sign(output_dir, sign_options):
+    sign_options.output_dir = output_dir
+    with mock.patch.object(stool, 'remote_signfile') as m:
+        with mock.patch.object(stool, 'is_authenticode_signed', new=lambda x: True):
+            with signtool_env():
+                m.return_value = True
+                stool.sign(sign_options, ["cert"])
+                log.debug(m.call_args_list)
+                m.return_value = False
+                with pytest.raises(SystemExit):
+                    stool.sign(sign_options, ["cert"])
