@@ -14,7 +14,7 @@ setup(
     description="Mozilla Signing Tool",
     author="Release Engineers",
     author_email="release+python@mozilla.com",
-    packages=find_packages(exclude="tests"),
+    packages=find_packages(),
     test_suite='tests',
     zip_safe=False,
     license="MPL 2.0",
