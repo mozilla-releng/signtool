@@ -4,6 +4,11 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [2.0.1] - 2016-07-08
+### Changed
+
+- fixed packaging to remove tests
+
 ## [2.0.0] - 2016-07-08
 ### Added
 - more unittests; 65% coverage
