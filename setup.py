@@ -14,6 +14,7 @@ setup(
     description="Mozilla Signing Tool",
     author="Release Engineers",
     author_email="release+python@mozilla.com",
+    url="https://github.com/mozilla-releng/signtool",
     packages=find_packages(),
     test_suite='tests',
     zip_safe=False,
