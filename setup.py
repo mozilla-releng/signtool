@@ -3,7 +3,7 @@
 from setuptools import setup, find_packages
 
 deps = [
-    'pefile==2016.3.28',
+    'pefile>=2016.3.28',
     'requests',
     'six',
 ]
