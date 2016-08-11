@@ -10,6 +10,10 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - moved source repo to [mozilla-releng/signtool](https://github.com/mozilla-releng/signtool)
 - changed required pefile version to `>=2016.3.28` because we need [this fix](https://github.com/erocarrera/pefile/commit/ac410dcf7fff6840a06bc50e374f4b4db33e0c0e) for py3.
 
+### Removed
+
+- removed py26 support
+
 ## [2.0.1] - 2016-07-08
 ### Changed
 
