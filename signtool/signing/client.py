@@ -143,8 +143,8 @@ def remote_signfile(options, urls, filename, fmt, token, dest=None):
                     nonce = nonce.encode('utf-8')
                 open(options.noncefile, 'wb').write(nonce)
             except requests.HTTPError as e:
-                log.exception("%s: error uploading file for signing: %s %s",
-                              filehash, e.code, e.msg)
+                log.exception("%s: error uploading file for signing: %s",
+                              filehash, str(e))
                 urls.pop(0)
                 urls.append(url)
             time.sleep(1)
