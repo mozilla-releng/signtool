@@ -189,7 +189,8 @@ def unpackfile(filename, destdir):
         return unpackmar(filename, destdir)
     elif filename.endswith(".exe"):
         return unpackexe(filename, destdir)
-    elif filename.endswith(".tar"):
+    elif filename.endswith(".tar") or filename.endswith(".tar.gz") \
+            or filename.endswith(".tgz"):
         return unpacktar(filename, destdir)
     else:
         raise ValueError("Unknown file type: %s" % filename)

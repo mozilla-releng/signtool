@@ -12,7 +12,7 @@ log = logging.getLogger(__name__)
 # params {{{1
 BASE_ARGS = ["-H", "gpg:mar:jar:hostname:port", "-c", "cert", "-t", "token", "-n", "nonce"]
 FMTS_ARGS = BASE_ARGS + ['-i', 'foo', '-x', 'bar', "-f"]
-MISSING_FMTS_PARAMS = ("dmgv2", "signcode,emevoucher")
+MISSING_FMTS_PARAMS = ("dmg", "signcode,emevoucher")
 INVALID_FMTS_PARAMS = ("foobar", "mar,foobar")
 GOOD_FMTS_PARAMS = (
     (["mar", "-H", "hostname:port"], ("mar", )),
@@ -58,12 +58,12 @@ def sign_options():
     options.format_urls = {
         "gpg": ["gpgurl1", "gpgurl2"],
         "signcode": ["signcodeurl1", "signcodeurl2"],
-        "dmgv2": ["dmgurl1", "dmgurl2"],
+        "dmg": ["dmgurl1", "dmgurl2"],
     }
     options.includes = ['cert']
     options.excludes = []
     options.output_dir = None
-    options.formats = ["dmgv2", "signcode", "gpg"]
+    options.formats = ["dmg", "signcode", "gpg"]
     return options
 
 

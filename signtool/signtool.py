@@ -13,13 +13,12 @@ from optparse import OptionParser
 import random
 
 from signtool.signing.client import remote_signfile
-from signtool.util.archives import packtar, unpacktar
 from signtool.util.paths import findfiles
 
 
 ALLOWED_FORMATS = (
     "sha2signcode", "signcode", "osslsigncode", "gpg", "mar", "dmg",
-    "dmgv2", "jar", "emevoucher"
+    "jar", "emevoucher"
 )
 
 log = logging.getLogger(__name__)
@@ -192,23 +191,11 @@ def sign(options, args):
         urls = options.format_urls[fmt][:]
         random.shuffle(urls)
 
-        # The only difference between dmg and dmgv2 are the servers they use.
-        # The server side code only understands "dmg" as a format, so we need
-        # to translate this now that we've chosen our URLs
-        if fmt == "dmgv2":
-            fmt = "dmg"
-
         log.debug("doing %s signing", fmt)
         log.debug("possible hosts are %s" % urls)
         files = []
-        # We want to package the ".app" file in a tar for mac signing.
-        if fmt == "dmg":
-            for fd in args:
-                packtar(fd + '.tar.gz', [fd], os.getcwd())
-                files.append(fd + '.tar.gz')
-        # For other platforms we sign all of the files individually.
-        else:
-            files = findfiles(args, options.includes, options.excludes)
+        # We sign all of the files individually.
+        files = findfiles(args, options.includes, options.excludes)
 
         for f in files:
             log.debug("%s", f)
@@ -224,12 +211,6 @@ def sign(options, args):
             if not remote_signfile(options, urls, f, fmt, token, dest):
                 log.error("Failed to sign %s with %s", f, fmt)
                 sys.exit(1)
-
-        if fmt == "dmg":
-            for fd in args:
-                log.debug("unpacking %s", fd)
-                unpacktar(fd + '.tar.gz', os.getcwd())
-                os.unlink(fd + '.tar.gz')
 
 
 # main {{{1
