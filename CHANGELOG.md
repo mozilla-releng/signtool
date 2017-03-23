@@ -4,6 +4,14 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [3.0.0] - 2017-03-23
+### Changed
+- changed the `dmg` signing format to accept and return tarballs.
+- changed `unpackfile` to accept `.tgz` and `.tar.gz` suffixes for tarballs.
+
+### Removed
+- removed the `dmgv2` signing format.
+
 ## [2.0.3] - 2016-08-19
 ### Fixed
 
