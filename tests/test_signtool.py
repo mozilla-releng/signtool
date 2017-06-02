@@ -59,11 +59,12 @@ def sign_options():
         "gpg": ["gpgurl1", "gpgurl2"],
         "signcode": ["signcodeurl1", "signcodeurl2"],
         "dmg": ["dmgurl1", "dmgurl2"],
+        "macapp": ["dmgurl1", "dmgurl2"],
     }
     options.includes = ['cert']
     options.excludes = []
     options.output_dir = None
-    options.formats = ["dmg", "signcode", "gpg"]
+    options.formats = ["dmg", "signcode", "gpg", "macapp"]
     return options
 
 
