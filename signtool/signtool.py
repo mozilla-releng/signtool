@@ -18,7 +18,7 @@ from signtool.util.paths import findfiles
 
 ALLOWED_FORMATS = (
     "sha2signcode", "signcode", "osslsigncode", "gpg", "mar", "dmg",
-    "jar", "emevoucher"
+    "jar", "emevoucher", "macapp",
 )
 
 log = logging.getLogger(__name__)
@@ -190,6 +190,9 @@ def sign(options, args):
     for fmt in options.formats:
         urls = options.format_urls[fmt][:]
         random.shuffle(urls)
+
+        if fmt in ("macapp", ):
+            fmt = "dmg"
 
         log.debug("doing %s signing", fmt)
         log.debug("possible hosts are %s" % urls)
