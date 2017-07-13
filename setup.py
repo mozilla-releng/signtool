@@ -3,14 +3,13 @@
 from setuptools import setup, find_packages
 
 deps = [
-    'pefile>=2016.3.28',
     'requests',
     'six',
 ]
 
 setup(
     name="signtool",
-    version="3.1.2",
+    version="3.1.3",
     description="Mozilla Signing Tool",
     author="Release Engineers",
     author_email="release+python@mozilla.com",

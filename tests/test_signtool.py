@@ -3,6 +3,7 @@ import logging
 import mock
 import optparse
 import pytest
+import os
 import signtool.signtool as stool
 from . import signtool_env
 
@@ -34,6 +35,8 @@ NSS_PARAMS = (
     ("not-win32", "asdf", "asdf"),
     ("not-win32", "/c/asdf", "/c/asdf"),
 )
+DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
+TARBALL = os.path.join(DATA_DIR, "dirtree.tgz")
 
 
 # helpers {{{1
@@ -66,47 +69,6 @@ def sign_options():
     options.output_dir = None
     options.formats = ["dmg", "signcode", "gpg", "macapp"]
     return options
-
-
-# authenticode {{{1
-@pytest.fixture(scope='function')
-def pe():
-    p = mock.MagicMock()
-    p.OPTIONAL_HEADER = mock.MagicMock()
-    p.OPTIONAL_HEADER.DATA_DIRECTORY = [mock.MagicMock()]
-    return p
-
-
-def test_authenticode_false(pe):
-    with mock.patch('pefile.PE') as m:
-        m.return_value = pe
-        result = stool.is_authenticode_signed(None)
-        assert result is False
-        m.assert_called_once_with(None)
-        pe.close.assert_called_once_with()
-
-
-def test_authenticode_true(pe):
-    with mock.patch('pefile.PE') as m:
-        m.return_value = pe
-        enable_auth = mock.MagicMock()
-        enable_auth.name = 'IMAGE_DIRECTORY_ENTRY_SECURITY'
-        enable_auth.VirtualAddress = 1
-        pe.OPTIONAL_HEADER.DATA_DIRECTORY.append(enable_auth)
-        result = stool.is_authenticode_signed(None)
-        assert result is True
-        m.assert_called_once_with(None)
-        pe.close.assert_called_once_with()
-
-
-def test_authenticode_exception(pe):
-    def exc():
-        raise Exception("foo")
-    with mock.patch('pefile.PE', new=exc):
-        with mock.patch.object(stool, 'log') as m:
-            result = stool.is_authenticode_signed(None)
-            assert result is False
-            m.exception.assert_called_once_with('Problem parsing file')
 
 
 # parse_cmdln_opts {{{1
@@ -211,3 +173,15 @@ def test_sign(output_dir, sign_options):
                 m.return_value = False
                 with pytest.raises(SystemExit):
                     stool.sign(sign_options, ["cert"])
+
+
+# is_authenticode_signed {{{1
+def test_is_authenticode_signed_false():
+    assert not stool.is_authenticode_signed(TARBALL)
+    assert not stool.is_authenticode_signed(os.path.join(DATA_DIR, 'unsigned32.exe'))
+    assert not stool.is_authenticode_signed(os.path.join(DATA_DIR, 'unsigned64.exe'))
+
+
+def test_is_authenticode_signed_true():
+    assert stool.is_authenticode_signed(os.path.join(DATA_DIR, 'signed32.exe'))
+    assert stool.is_authenticode_signed(os.path.join(DATA_DIR, 'signed64.exe'))
