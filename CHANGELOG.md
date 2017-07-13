@@ -2,6 +2,10 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [3.1.3] - 2017-07-13
+### Changed
+- stop using pefile; verify windows signatures more efficiently
+
 ## [3.1.2] - 2017-07-13
 ### Fixed
 - accept the `sha2signcodestub` and `mar_sha384` signing format.
