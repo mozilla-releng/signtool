@@ -67,7 +67,16 @@ def is_authenticode_signed(filename):
         cert_table_offset = number_of_data_dirs_offset + 4*8 + 4
         fp.seek(cert_table_offset)
         addr, size = struct.unpack('<LL', fp.read(8))
-        return addr != 0 and size != 0
+        if not addr or not size:
+            return False
+        # Check that addr is inside the file
+        fp.seek(addr)
+        if fp.tell() != addr:
+            return False
+        cert = fp.read(size)
+        if len(cert) != size:
+            return False
+        return True
 
 
 # parse_cmdln_opts {{{1
