@@ -2,6 +2,10 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [3.1.4] - 2017-08-04
+### Added
+- added widevine support
+
 ## [3.1.3] - 2017-07-13
 ### Changed
 - stop using pefile; verify windows signatures more efficiently
