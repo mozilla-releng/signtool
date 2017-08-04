@@ -3,9 +3,11 @@ from contextlib import contextmanager
 import mock
 import optparse
 import os
+import pytest
 import shutil
 import signtool.signing.client as sclient
 import tempfile
+import time
 
 CACHE = ("cached", "5dc0f60874af2d0cb171f07df7ee02cdc8352ce3")
 
@@ -98,6 +100,51 @@ def test_cached_fn_nss():
             m.assert_called_once_with('echo "%s"' % target, shell=True)
         with open(target, "r") as fh:
             assert fh.read().rstrip() == CACHE[0]
+
+
+# remote_signfile {{{1
+@pytest.mark.parametrize('cachedir,fmt,dest', ((
+    'cachedir', 'gpg', 'dest',
+), (
+    None, 'widevine', None,
+)))
+def test_remote_signfile_noop(mocker, cachedir, fmt, dest):
+
+    def noop(*args, **kwargs):
+        pass
+
+    def fake_iter(*args):
+        return ['a', 'b']
+
+    fake_r = mock.MagicMock()
+    fake_r.iter_content = fake_iter
+    fake_r.headers = {
+        'X-Nonce': None,
+        'X-Sha1-Digest': 'foo',
+    }
+
+    def fake_get(*args):
+        return fake_r
+
+    def fake_hash(*args):
+        return 'hash'
+
+    options = optparse.Values()
+    options.cachedir = cachedir
+    options.cert = 'cert'
+
+    mocker.patch.object(sclient, 'sha1sum', new=fake_hash)
+    mocker.patch.object(sclient, 'check_cached_fn', new=noop)
+    mocker.patch.object(sclient, 'getfile', new=fake_get)
+    mocker.patch.object(sclient, 'check_call', new=noop)
+    mocker.patch.object(sclient, 'uploadfile', new=fake_get)
+    mocker.patch.object(time, 'sleep', new=noop)
+    with cache_dir() as tmpdir:
+        options.noncefile = os.path.join(tmpdir, "nonce")
+        sclient.remote_signfile(
+            options, ['a', 'b'], os.path.join(tmpdir, 'foo'), fmt, 'token',
+            dest=dest
+        )
 
 
 # uploadfile {{{1

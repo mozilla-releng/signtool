@@ -17,8 +17,19 @@ from signtool.util.paths import findfiles
 
 
 ALLOWED_FORMATS = (
-    "sha2signcode", "sha2signcodestub", "signcode", "osslsigncode", "gpg",
-    "mar", "mar_sha384", "dmg", "jar", "emevoucher", "macapp",
+    "dmg",
+    "emevoucher",
+    "gpg",
+    "jar",
+    "macapp",
+    "mar",
+    "mar_sha384",
+    "osslsigncode",
+    "sha2signcode",
+    "sha2signcodestub",
+    "signcode",
+    "widevine",
+    "widevine_blessed",
 )
 
 log = logging.getLogger(__name__)
@@ -168,12 +179,13 @@ def parse_cmdln_opts(parser, cmdln_args):
         else:
             formats.append(fmt)
 
-    # bug 1164456
-    # GPG signing must happen last because it will be invalid if done prior to
-    # any format that modifies the file in-place.
-    if "gpg" in formats:
-        formats.remove("gpg")
-        formats.append("gpg")
+    # bug 1382882, 1164456
+    # Widevine and GPG signing must happen last because they will be invalid if
+    # done prior to any format that modifies the file in-place.
+    for fmt in ("widevine", "widevine_blessed", "gpg"):
+        if fmt in formats:
+            formats.remove(fmt)
+            formats.append(fmt)
 
     if options.output_file and (len(args) > 1 or os.path.isdir(args[0])):
         parser.error(

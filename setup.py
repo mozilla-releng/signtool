@@ -9,7 +9,7 @@ deps = [
 
 setup(
     name="signtool",
-    version="3.1.3",
+    version="3.1.4",
     description="Mozilla Signing Tool",
     author="Release Engineers",
     author_email="release+python@mozilla.com",
