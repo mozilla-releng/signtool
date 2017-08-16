@@ -49,12 +49,19 @@ def test_tar(tmpdir):
     TARBALL, False, 'dir2/foobar'
 ), (
     __file__, ValueError, None
+), (
+    "foo.exe", False, None
+), (
+    "foo.mar", False, None
 )))
-def test_unpackfile(tmpdir, path, raises, expected):
+def test_unpackfile(tmpdir, path, raises, expected, mocker):
     tmpdir_path = str(tmpdir)
+    mocker.patch.object(archives, "unpackmar")
+    mocker.patch.object(archives, "unpackexe")
     if raises:
         with pytest.raises(raises):
             archives.unpackfile(path, tmpdir_path)
     else:
         archives.unpackfile(path, tmpdir_path)
-        assert os.path.exists(os.path.join(tmpdir_path, expected))
+        if expected is not None:
+            assert os.path.exists(os.path.join(tmpdir_path, expected))
