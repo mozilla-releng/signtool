@@ -67,6 +67,7 @@ def sign_options():
     options.includes = ['cert']
     options.excludes = []
     options.output_dir = None
+    options.output_file = None
     options.formats = ["dmg", "signcode", "gpg", "macapp"]
     return options
 
@@ -161,9 +162,16 @@ def test_main(args):
 
 
 # sign {{{1
-@pytest.mark.parametrize("output_dir", ("foo", None))
-def test_sign(output_dir, sign_options):
+@pytest.mark.parametrize("output_dir,output_file", ((
+    "foo", None
+), (
+    None, "foo"
+), (
+    None, None
+)))
+def test_sign(output_dir, output_file, sign_options):
     sign_options.output_dir = output_dir
+    sign_options.output_file = output_file
     with mock.patch.object(stool, 'remote_signfile') as m:
         with mock.patch.object(stool, 'is_authenticode_signed', new=lambda x: True):
             with signtool_env():

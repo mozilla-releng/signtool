@@ -256,6 +256,8 @@ def sign(options, args):
                 continue
             if options.output_dir:
                 dest = os.path.join(options.output_dir, os.path.basename(f))
+            elif options.output_file:
+                dest = options.output_file
             else:
                 dest = None
 
