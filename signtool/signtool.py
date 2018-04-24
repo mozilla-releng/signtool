@@ -21,6 +21,7 @@ ALLOWED_FORMATS = (
     "emevoucher",
     "gpg",
     "jar",
+    "focus-jar",
     "macapp",
     "mar",
     "mar_sha384",

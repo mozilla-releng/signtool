@@ -11,14 +11,15 @@ log = logging.getLogger(__name__)
 
 
 # params {{{1
-BASE_ARGS = ["-H", "gpg:mar:jar:hostname:port", "-c", "cert", "-t", "token", "-n", "nonce"]
+BASE_ARGS = ["-H", "gpg:mar:jar:focus-jar:hostname:port", "-c", "cert", "-t", "token", "-n", "nonce"]
 FMTS_ARGS = BASE_ARGS + ['-i', 'foo', '-x', 'bar', "-f"]
 MISSING_FMTS_PARAMS = ("dmg", "signcode,emevoucher")
 INVALID_FMTS_PARAMS = ("foobar", "mar,foobar")
 GOOD_FMTS_PARAMS = (
     (["mar", "-H", "hostname:port"], ("mar", )),
     (["mar,jar", "-d", "foo"], ("mar", "jar")),
-    (["gpg,jar", "-d", "."], ("jar", "gpg"))
+    (["gpg,jar", "-d", "."], ("jar", "gpg")),
+    (["focus-jar", "-d", "."], ("focus-jar",)),
 )
 MISSING_ARGS_PARAMS = (
     ([], "at least one host is required"),
