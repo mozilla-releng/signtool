@@ -2,6 +2,10 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [3.2.0] - 2018-04-24
+### Added
+- Added focus-jar support
+
 ## [3.1.6] - 2017-08-15
 ### Fixed
 - stop munging dest, now that `output_file` works
