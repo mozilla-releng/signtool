@@ -121,7 +121,7 @@ def remote_signfile(options, urls, filename, fmt, token, dest=None):
                     time.sleep(15)
                     pendings += 1
                     continue
-            except:
+            except Exception:
                 raise
 
             errors += 1

@@ -154,12 +154,12 @@ def test_main(args):
     with mock.patch.object(stool, 'sign'):
         with mock.patch('sys.argv', new=["signtool"] + GOOD_ARGS):
             with signtool_env():
-                with mock.patch.object(stool, 'log') as l:
+                with mock.patch.object(stool, 'log') as patched_log:
                     stool.main(name=args[0])
                     if args[1] is not None:
-                        l.info.assert_called_once_with(args[1])
+                        patched_log.info.assert_called_once_with(args[1])
                     else:
-                        assert len(l.info.call_args_list) == 0
+                        assert len(patched_log.info.call_args_list) == 0
 
 
 # sign {{{1

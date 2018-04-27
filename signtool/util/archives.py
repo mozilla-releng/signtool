@@ -27,7 +27,7 @@ def unpackexe(exefile, destdir):
     try:
         check_call([SEVENZIP, 'x', exefile], cwd=destdir,
                    stdout=nullfd, preexec_fn=_noumask)
-    except:
+    except Exception:
         log.exception("Error unpacking exe %s to %s", exefile, destdir)
         raise
     nullfd.close()
@@ -56,7 +56,7 @@ def packexe(exefile, srcdir):
     try:
         check_call([SEVENZIP, 'a'] + SEVENZIP_ARGS + [appbundle] + files,
                    cwd=srcdir, stdout=stdout, preexec_fn=_noumask)
-    except:
+    except Exception:
         stdout.seek(0)
         data = stdout.read()
         log.error(data)
@@ -128,7 +128,7 @@ def unpackmar(marfile, destdir):
     try:
         check_call([MAR, '-x', marfile], cwd=destdir,
                    stdout=nullfd, preexec_fn=_noumask)
-    except:
+    except Exception:
         log.exception("Error unpacking mar file %s to %s", marfile, destdir)
         raise
     nullfd.close()
@@ -142,7 +142,7 @@ def packmar(marfile, srcdir):
     try:
         check_call(
             [MAR, '-c', marfile] + files, cwd=srcdir, preexec_fn=_noumask)
-    except:
+    except Exception:
         log.exception("Error packing mar file %s from %s", marfile, srcdir)
         raise
     nullfd.close()
@@ -156,7 +156,7 @@ def unpacktar(tarfile, destdir):
     try:
         check_call([TAR, '-xzf', tarfile], cwd=destdir,
                    stdout=nullfd, preexec_fn=_noumask)
-    except:
+    except Exception:
         log.exception("Error unpacking tar file %s to %s", tarfile, destdir)
         raise
     nullfd.close()
@@ -177,7 +177,7 @@ def packtar(tarfile, files, srcdir):
     try:
         check_call([TAR, '-czf', tarfile] + files, cwd=srcdir,
                    stdout=nullfd, preexec_fn=_noumask)
-    except:
+    except Exception:
         log.exception("Error packing tar file %s to %s", tarfile, srcdir)
         raise
     nullfd.close()
