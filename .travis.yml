@@ -9,14 +9,14 @@ matrix:
       env: TOXENV=py35
     - python: 3.6
       env: TOXENV=py36
-    - python: 3.7-dev
+    - python: 3.7
+      dist: xenial
       env: TOXENV=py37
-  allow_failures:
-    - python: 3.7-dev
+      sudo: true
 
 install:
-    - python -mpip install tox
+    - travis_retry pip install tox
 script:
-    - tox -e "$TOX_ENVIRONMENT"
+    - tox
 after_success:
     - tox -e coveralls
