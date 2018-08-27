@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#!/usr/bin/env python
 
 from setuptools import setup, find_packages
 
@@ -9,7 +9,7 @@ deps = [
 
 setup(
     name="signtool",
-    version="3.2.0",
+    version="3.2.1",
     description="Mozilla Signing Tool",
     author="Release Engineers",
     author_email="release+python@mozilla.com",
@@ -32,5 +32,6 @@ setup(
         "Programming Language :: Python :: 2.7",
         "Programming Language :: Python :: 3.5",
         "Programming Language :: Python :: 3.6",
+        "Programming Language :: Python :: 3.7",
     ),
 )
