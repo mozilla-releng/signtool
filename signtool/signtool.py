@@ -18,17 +18,14 @@ from signtool.util.paths import findfiles
 
 ALLOWED_FORMATS = (
     "dmg",
-    "emevoucher",
     "gpg",
-    "jar",
-    "focus-jar",
     "macapp",
     "mar",
     "mar_sha384",
-    "osslsigncode",
     "sha2signcode",
     "sha2signcodestub",
-    "signcode",
+    "sha2signcode-v2",
+    "sha2signcodestub-v2",
     "widevine",
     "widevine_blessed",
 )
@@ -251,8 +248,7 @@ def sign(options, args):
         for f in files:
             log.debug("%s", f)
             log.debug("checking %s for signature...", f)
-            if fmt in ('sha2signcode', 'sha2signcodestub', 'signcode', 'osslsigncode') \
-                    and is_authenticode_signed(f):
+            if fmt.startswith('sha2signcode') and is_authenticode_signed(f):
                 log.info("Skipping %s because it looks like it's already signed", f)
                 continue
             if options.output_dir:

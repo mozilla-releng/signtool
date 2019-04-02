@@ -11,15 +11,14 @@ log = logging.getLogger(__name__)
 
 
 # params {{{1
-BASE_ARGS = ["-H", "gpg:mar:jar:focus-jar:hostname:port", "-c", "cert", "-t", "token", "-n", "nonce"]
+BASE_ARGS = ["-H", "gpg:mar:sha2signcode-v2:hostname:port", "-c", "cert", "-t", "token", "-n", "nonce"]
 FMTS_ARGS = BASE_ARGS + ['-i', 'foo', '-x', 'bar', "-f"]
-MISSING_FMTS_PARAMS = ("dmg", "signcode,emevoucher")
+MISSING_FMTS_PARAMS = ("dmg", "mar_sha384,sha2signcode-v2")
 INVALID_FMTS_PARAMS = ("foobar", "mar,foobar")
 GOOD_FMTS_PARAMS = (
     (["mar", "-H", "hostname:port"], ("mar", )),
-    (["mar,jar", "-d", "foo"], ("mar", "jar")),
-    (["gpg,jar", "-d", "."], ("jar", "gpg")),
-    (["focus-jar", "-d", "."], ("focus-jar",)),
+    (["mar,sha2signcode-v2", "-d", "foo"], ("mar", "sha2signcode-v2")),
+    (["gpg,sha2signcode-v2", "-d", "."], ("sha2signcode-v2", "gpg")),
 )
 MISSING_ARGS_PARAMS = (
     ([], "at least one host is required"),
@@ -61,7 +60,7 @@ def sign_options():
     options.tokenfile = "token"
     options.format_urls = {
         "gpg": ["gpgurl1", "gpgurl2"],
-        "signcode": ["signcodeurl1", "signcodeurl2"],
+        "sha2signcode-v2": ["sha2signcode1", "sha2signcode2"],
         "dmg": ["dmgurl1", "dmgurl2"],
         "macapp": ["dmgurl1", "dmgurl2"],
     }
@@ -69,7 +68,7 @@ def sign_options():
     options.excludes = []
     options.output_dir = None
     options.output_file = None
-    options.formats = ["dmg", "signcode", "gpg", "macapp"]
+    options.formats = ["dmg", "sha2signcode-v2", "gpg", "macapp"]
     return options
 
 
@@ -163,13 +162,11 @@ def test_main(args):
 
 
 # sign {{{1
-@pytest.mark.parametrize("output_dir,output_file", ((
-    "foo", None
-), (
-    None, "foo"
-), (
-    None, None
-)))
+@pytest.mark.parametrize("output_dir,output_file", (
+    ("foo", None),
+    (None, "foo"),
+    (None, None))
+)
 def test_sign(output_dir, output_file, sign_options):
     sign_options.output_dir = output_dir
     sign_options.output_file = output_file

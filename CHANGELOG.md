@@ -2,6 +2,14 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [4.0.0] - 2019-04-01
+### Added
+- sha2signcode-v2 support
+
+### Removed
+- jar, focus, eme, signcode support
+- py3.5 support
+
 ## [3.2.1] - 2018-08-27
 ### Added
 - py3.6 and 3.7 support
