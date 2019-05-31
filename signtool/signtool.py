@@ -268,8 +268,7 @@ def main(name=None):
     if name in (None, '__main__'):
         parser = OptionParser(__doc__)
         options, args = parse_cmdln_opts(parser, sys.argv[1:])
-        logging.basicConfig(
-            level=options.log_level, format="%(asctime)s - %(message)s")
+        logging.basicConfig(level=options.log_level, format="%(message)s")
         log.debug("in %s", os.getcwd())
         sign(options, args)
         log.info("Done.")
