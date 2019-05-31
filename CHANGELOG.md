@@ -2,6 +2,10 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [4.0.1] - 2019-05-31
+### Removed
+- Stopped adding timestamps to stdout
+
 ## [4.0.0] - 2019-04-01
 ### Added
 - sha2signcode-v2 support
